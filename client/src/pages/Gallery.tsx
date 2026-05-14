@@ -789,6 +789,7 @@ export default function Gallery() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => fileInputRef.current?.click()}
+            aria-label="Add photos to gallery"
             className="fixed bottom-24 right-5 w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 active:scale-90 transition-transform z-30"
           >
             <Plus className="w-5 h-5" />

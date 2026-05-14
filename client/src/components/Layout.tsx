@@ -33,7 +33,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       </main>
 
       {/* Bottom Tab Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50">
+      <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-50">
         <div className="glass-strong border-t border-white/20">
           <div className="max-w-lg mx-auto flex items-center justify-around px-2 py-2">
             {tabs.map(({ path, label, icon: Icon }) => {
@@ -41,6 +41,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               return (
                 <Link key={path} href={path}>
                   <motion.div
+                    aria-current={isActive ? "page" : undefined}
                     className={`flex flex-col items-center gap-0.5 px-5 py-1.5 rounded-xl transition-colors ${
                       isActive ? "text-blue-600" : "text-slate-400"
                     }`}

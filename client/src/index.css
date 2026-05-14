@@ -204,3 +204,14 @@
 .animate-jiggle {
   animation: jiggle 0.3s ease-in-out infinite;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-jiggle {
+    animation: none;
+  }
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

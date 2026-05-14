@@ -110,7 +110,7 @@ export default function Home() {
               <Upload className="w-5 h-5 text-white" />
             </div>
             <h3 className="text-xs font-semibold text-slate-700 mb-0.5">Convert</h3>
-            <p className="text-[10px] text-slate-600 leading-tight">AI transform</p>
+            <p className="text-xs text-slate-600 leading-tight">AI transform</p>
           </div>
         </Link>
 
@@ -128,7 +128,7 @@ export default function Home() {
             <ImagePlus className="w-5 h-5 text-white" />
           </div>
           <h3 className="text-xs font-semibold text-slate-700 mb-0.5">Add Photos</h3>
-          <p className="text-[10px] text-slate-600 leading-tight">To gallery</p>
+          <p className="text-xs text-slate-600 leading-tight">To gallery</p>
         </div>
 
         <Link href="/gallery">
@@ -137,7 +137,7 @@ export default function Home() {
               <Images className="w-5 h-5 text-white" />
             </div>
             <h3 className="text-xs font-semibold text-slate-700 mb-0.5">Gallery</h3>
-            <p className="text-[10px] text-slate-600 leading-tight">
+            <p className="text-xs text-slate-600 leading-tight">
               {images.length > 0 ? `${images.length} photos` : "View photos"}
             </p>
           </div>
@@ -246,15 +246,15 @@ export default function Home() {
           <div className="grid grid-cols-3 divide-x divide-slate-200/50">
             <div className="text-center px-3">
               <div className="text-xl font-bold text-slate-700">{images.length}</div>
-              <div className="text-[11px] text-slate-600 font-medium">In Gallery</div>
+              <div className="text-xs text-slate-600 font-medium">In Gallery</div>
             </div>
             <div className="text-center px-3">
               <div className="text-xl font-bold text-slate-700">{totalSuccess}</div>
-              <div className="text-[11px] text-slate-600 font-medium">Converted</div>
+              <div className="text-xs text-slate-600 font-medium">Converted</div>
             </div>
             <div className="text-center px-3">
               <div className="text-xl font-bold text-slate-700">{totalConverted > 0 ? Math.round((totalSuccess / totalConverted) * 100) : 0}%</div>
-              <div className="text-[11px] text-slate-600 font-medium">Success</div>
+              <div className="text-xs text-slate-600 font-medium">Success</div>
             </div>
           </div>
         </div>

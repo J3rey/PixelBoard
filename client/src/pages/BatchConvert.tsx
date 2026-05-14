@@ -31,6 +31,7 @@ import {
   Key,
   RefreshCw,
   ShieldAlert,
+  Shield,
   Clock,
   WifiOff,
   Ban,
@@ -1012,7 +1013,7 @@ export default function BatchConvert() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-              <Ban className="w-4 h-4 text-blue-500" />
+              <Shield className="w-4 h-4 text-blue-500" />
               Gemini safety caps
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -1143,7 +1144,8 @@ export default function BatchConvert() {
                 </div>
                 <button
                   onClick={dismissError}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                  aria-label="Dismiss error"
+                  className="p-1 -m-1 text-slate-400 hover:text-slate-600 transition-colors rounded"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1259,12 +1261,13 @@ export default function BatchConvert() {
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
                     <button
                       onClick={() => removePhoto(photo.id)}
-                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
+                      aria-label={`Remove ${photo.name}`}
+                      className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                     <div className="absolute bottom-0 left-0 right-0 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <p className="text-[10px] text-white truncate font-medium bg-black/40 rounded px-1.5 py-0.5">
+                      <p className="text-xs text-white truncate font-medium bg-black/40 rounded px-1.5 py-0.5">
                         {photo.name}
                       </p>
                     </div>
@@ -1286,6 +1289,7 @@ export default function BatchConvert() {
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             placeholder="Describe how you want to transform your photos..."
+            aria-label="Conversion prompt"
             className="h-12 rounded-xl bg-white/50 border-white/40 focus:border-blue-400 text-base"
             disabled={isConverting}
           />
@@ -1383,8 +1387,8 @@ export default function BatchConvert() {
                               e.stopPropagation();
                               togglePromptFavorite(item.id);
                             }}
-                            className="shrink-0 p-0.5 transition-colors"
-                            title={
+                            className="shrink-0 p-1.5 -m-1.5 transition-colors rounded"
+                            aria-label={
                               item.isFavorite
                                 ? "Remove from favorites"
                                 : "Add to favorites"
@@ -1406,7 +1410,7 @@ export default function BatchConvert() {
 
                           {/* Use count badge */}
                           {item.useCount > 1 && (
-                            <span className="text-[10px] font-medium text-slate-400 bg-slate-100/60 px-1.5 py-0.5 rounded-full shrink-0">
+                            <span className="text-xs font-medium text-slate-400 bg-slate-100/60 px-1.5 py-0.5 rounded-full shrink-0">
                               {item.useCount}x
                             </span>
                           )}
@@ -1417,8 +1421,8 @@ export default function BatchConvert() {
                               e.stopPropagation();
                               removePromptFromHistory(item.id);
                             }}
-                            className="shrink-0 p-0.5 text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
-                            title="Remove from history"
+                            className="shrink-0 p-1.5 -m-1.5 text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded"
+                            aria-label="Remove from history"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -1575,7 +1579,7 @@ export default function BatchConvert() {
                   {photo.status === "error" && (
                     <div className="absolute inset-0 bg-red-900/40 flex flex-col items-center justify-center p-2">
                       <AlertCircle className="w-6 h-6 text-red-300 mb-1.5" />
-                      <span className="text-[10px] text-red-200 font-medium text-center leading-tight max-w-full px-1">
+                      <span className="text-xs text-red-200 font-medium text-center leading-tight max-w-full px-1">
                         {photo.error || "Failed"}
                       </span>
                     </div>
