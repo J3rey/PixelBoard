@@ -1,4 +1,4 @@
-/* 
+/*
  * GradeFlow — Batch Convert Page
  * Design: Aero Glass — iOS-inspired glassmorphism
  * - Drag & drop upload zone with animated border
@@ -78,7 +78,14 @@ const STYLE_PRESETS = [
 ];
 
 // Error classification
-type ApiErrorType = "rate_limit" | "usage_limit" | "quota_exhausted" | "auth_error" | "network_error" | "server_error" | "unknown";
+type ApiErrorType =
+  | "rate_limit"
+  | "usage_limit"
+  | "quota_exhausted"
+  | "auth_error"
+  | "network_error"
+  | "server_error"
+  | "unknown";
 
 interface ApiError {
   type: ApiErrorType;
@@ -98,18 +105,30 @@ interface LimitDialogState {
 function classifyError(err: any, statusCode?: number): ApiError {
   // Network / fetch errors
   if (err instanceof TypeError && err.message.includes("fetch")) {
-    return { type: "network_error", message: "Network connection failed. Check your internet and try again." };
+    return {
+      type: "network_error",
+      message: "Network connection failed. Check your internet and try again.",
+    };
   }
   if (err.name === "AbortError") {
-    return { type: "network_error", message: "Request timed out. The server took too long to respond." };
+    return {
+      type: "network_error",
+      message: "Request timed out. The server took too long to respond.",
+    };
   }
 
   // HTTP status-based classification
   if (statusCode === 429) {
-    if (err.code === "GRADEFLOW_USAGE_LIMIT") {
+    if (
+      err.code === "GRADEFLOW_USAGE_LIMIT" ||
+      err.code === "TONELAB_USAGE_LIMIT" ||
+      err.code === "PIXELBOARD_USAGE_LIMIT"
+    ) {
       return {
         type: "usage_limit",
-        message: err.message || "GradeFlow safety cap reached. No Gemini request was sent.",
+        message:
+          err.message ||
+          "GradeFlow safety cap reached. No Gemini request was sent.",
         statusCode,
         usage: err.usage,
         limitType: err.limitType,
@@ -127,21 +146,24 @@ function classifyError(err: any, statusCode?: number): ApiError {
   if (statusCode === 401 || statusCode === 403) {
     return {
       type: "auth_error",
-      message: "Invalid or expired API key. Please check your key and try again.",
+      message:
+        "Invalid or expired API key. Please check your key and try again.",
       statusCode,
     };
   }
   if (statusCode === 402) {
     return {
       type: "quota_exhausted",
-      message: "API quota exhausted. You've used all available credits. Please upgrade your plan or wait for your quota to reset.",
+      message:
+        "API quota exhausted. You've used all available credits. Please upgrade your plan or wait for your quota to reset.",
       statusCode,
     };
   }
   if (statusCode && statusCode >= 500) {
     return {
       type: "server_error",
-      message: "Gemini API servers are experiencing issues. Please try again later.",
+      message:
+        "Gemini API servers are experiencing issues. Please try again later.",
       statusCode,
     };
   }
@@ -156,30 +178,89 @@ function classifyError(err: any, statusCode?: number): ApiError {
 
 function getErrorIcon(type: ApiErrorType) {
   switch (type) {
-    case "rate_limit": return <Clock className="w-5 h-5" />;
-    case "usage_limit": return <Ban className="w-5 h-5" />;
-    case "quota_exhausted": return <Ban className="w-5 h-5" />;
-    case "auth_error": return <ShieldAlert className="w-5 h-5" />;
-    case "network_error": return <WifiOff className="w-5 h-5" />;
-    case "server_error": return <Zap className="w-5 h-5" />;
-    default: return <AlertCircle className="w-5 h-5" />;
+    case "rate_limit":
+      return <Clock className="w-5 h-5" />;
+    case "usage_limit":
+      return <Ban className="w-5 h-5" />;
+    case "quota_exhausted":
+      return <Ban className="w-5 h-5" />;
+    case "auth_error":
+      return <ShieldAlert className="w-5 h-5" />;
+    case "network_error":
+      return <WifiOff className="w-5 h-5" />;
+    case "server_error":
+      return <Zap className="w-5 h-5" />;
+    default:
+      return <AlertCircle className="w-5 h-5" />;
   }
 }
 
 function getErrorColor(type: ApiErrorType) {
   switch (type) {
-    case "rate_limit": return { bg: "bg-amber-50/80", border: "border-amber-200/60", icon: "text-amber-500", text: "text-amber-700" };
-    case "usage_limit": return { bg: "bg-blue-50/80", border: "border-blue-200/60", icon: "text-blue-500", text: "text-blue-700" };
-    case "quota_exhausted": return { bg: "bg-red-50/80", border: "border-red-200/60", icon: "text-red-500", text: "text-red-700" };
-    case "auth_error": return { bg: "bg-orange-50/80", border: "border-orange-200/60", icon: "text-orange-500", text: "text-orange-700" };
-    case "network_error": return { bg: "bg-slate-50/80", border: "border-slate-200/60", icon: "text-slate-500", text: "text-slate-700" };
-    case "server_error": return { bg: "bg-purple-50/80", border: "border-purple-200/60", icon: "text-purple-500", text: "text-purple-700" };
-    default: return { bg: "bg-red-50/80", border: "border-red-200/60", icon: "text-red-500", text: "text-red-700" };
+    case "rate_limit":
+      return {
+        bg: "bg-amber-50/80",
+        border: "border-amber-200/60",
+        icon: "text-amber-500",
+        text: "text-amber-700",
+      };
+    case "usage_limit":
+      return {
+        bg: "bg-blue-50/80",
+        border: "border-blue-200/60",
+        icon: "text-blue-500",
+        text: "text-blue-700",
+      };
+    case "quota_exhausted":
+      return {
+        bg: "bg-red-50/80",
+        border: "border-red-200/60",
+        icon: "text-red-500",
+        text: "text-red-700",
+      };
+    case "auth_error":
+      return {
+        bg: "bg-orange-50/80",
+        border: "border-orange-200/60",
+        icon: "text-orange-500",
+        text: "text-orange-700",
+      };
+    case "network_error":
+      return {
+        bg: "bg-slate-50/80",
+        border: "border-slate-200/60",
+        icon: "text-slate-500",
+        text: "text-slate-700",
+      };
+    case "server_error":
+      return {
+        bg: "bg-purple-50/80",
+        border: "border-purple-200/60",
+        icon: "text-purple-500",
+        text: "text-purple-700",
+      };
+    default:
+      return {
+        bg: "bg-red-50/80",
+        border: "border-red-200/60",
+        icon: "text-red-500",
+        text: "text-red-700",
+      };
   }
 }
 
 export default function BatchConvert() {
-  const { apiKey, convertedPhotos, setConvertedPhotos, transferAllToGallery, promptHistory, addPromptToHistory, togglePromptFavorite, removePromptFromHistory, recordConversion } = useGallery();
+  const {
+    apiKey,
+    convertedPhotos,
+    setConvertedPhotos,
+    transferAllToGallery,
+    promptHistory,
+    addPromptToHistory,
+    togglePromptFavorite,
+    removePromptFromHistory,
+    recordConversion,
+  } = useGallery();
   const [showPromptHistory, setShowPromptHistory] = useState(false);
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
   const [prompt, setPrompt] = useState("");
@@ -188,13 +269,13 @@ export default function BatchConvert() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [showApiDialog, setShowApiDialog] = useState(false);
   const [limitDialog, setLimitDialog] = useState<LimitDialogState | null>(null);
-  
+
   // Error state
   const [batchError, setBatchError] = useState<ApiError | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const abortRef = useRef(false);
-  
+
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -204,50 +285,58 @@ export default function BatchConvert() {
     staleTime: 10_000,
   });
 
-  const openLimitDialog = useCallback((title: string, message: string, usage?: GeminiUsageSnapshot) => {
-    setLimitDialog({ title, message, usage });
-    toast.warning(title, { description: message });
-  }, []);
+  const openLimitDialog = useCallback(
+    (title: string, message: string, usage?: GeminiUsageSnapshot) => {
+      setLimitDialog({ title, message, usage });
+      toast.warning(title, { description: message });
+    },
+    []
+  );
 
-  const handleFiles = useCallback((files: FileList | File[]) => {
-    const imageFiles = Array.from(files).filter((f) =>
-      f.type.startsWith("image/")
-    );
-    if (imageFiles.length === 0) {
-      toast.error("Please select image files only");
-      return;
-    }
-
-    const remainingSlots = Math.max(0, MAX_BATCH_SIZE - photos.length);
-    if (remainingSlots === 0) {
-      openLimitDialog(
-        "Batch limit reached",
-        `You can convert up to ${MAX_BATCH_SIZE} images in one batch. Clear or remove one first.`
+  const handleFiles = useCallback(
+    (files: FileList | File[]) => {
+      const imageFiles = Array.from(files).filter(f =>
+        f.type.startsWith("image/")
       );
-      return;
-    }
+      if (imageFiles.length === 0) {
+        toast.error("Please select image files only");
+        return;
+      }
 
-    const acceptedFiles = imageFiles.slice(0, remainingSlots);
-    const skippedCount = imageFiles.length - acceptedFiles.length;
+      const remainingSlots = Math.max(0, MAX_BATCH_SIZE - photos.length);
+      if (remainingSlots === 0) {
+        openLimitDialog(
+          "Batch limit reached",
+          `You can convert up to ${MAX_BATCH_SIZE} images in one batch. Clear or remove one first.`
+        );
+        return;
+      }
 
-    const newPhotos: UploadedPhoto[] = acceptedFiles.map((file) => ({
-      id: nanoid(),
-      file,
-      preview: URL.createObjectURL(file),
-      name: file.name,
-      size: file.size,
-    }));
+      const acceptedFiles = imageFiles.slice(0, remainingSlots);
+      const skippedCount = imageFiles.length - acceptedFiles.length;
 
-    setPhotos((prev) => [...prev, ...newPhotos]);
-    toast.success(`Added ${acceptedFiles.length} photo${acceptedFiles.length > 1 ? "s" : ""}`);
+      const newPhotos: UploadedPhoto[] = acceptedFiles.map(file => ({
+        id: nanoid(),
+        file,
+        preview: URL.createObjectURL(file),
+        name: file.name,
+        size: file.size,
+      }));
 
-    if (skippedCount > 0) {
-      openLimitDialog(
-        "Only 3 images per batch",
-        `${skippedCount} image${skippedCount === 1 ? "" : "s"} were skipped so this batch stays inside the safety cap.`
+      setPhotos(prev => [...prev, ...newPhotos]);
+      toast.success(
+        `Added ${acceptedFiles.length} photo${acceptedFiles.length > 1 ? "s" : ""}`
       );
-    }
-  }, [openLimitDialog, photos.length]);
+
+      if (skippedCount > 0) {
+        openLimitDialog(
+          "Only 3 images per batch",
+          `${skippedCount} image${skippedCount === 1 ? "" : "s"} were skipped so this batch stays inside the safety cap.`
+        );
+      }
+    },
+    [openLimitDialog, photos.length]
+  );
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -259,15 +348,15 @@ export default function BatchConvert() {
   );
 
   const removePhoto = (id: string) => {
-    setPhotos((prev) => {
-      const photo = prev.find((p) => p.id === id);
+    setPhotos(prev => {
+      const photo = prev.find(p => p.id === id);
       if (photo) URL.revokeObjectURL(photo.preview);
-      return prev.filter((p) => p.id !== id);
+      return prev.filter(p => p.id !== id);
     });
   };
 
   const clearAll = () => {
-    photos.forEach((p) => URL.revokeObjectURL(p.preview));
+    photos.forEach(p => URL.revokeObjectURL(p.preview));
     setPhotos([]);
   };
 
@@ -288,7 +377,7 @@ export default function BatchConvert() {
     setCooldownSeconds(seconds);
     if (cooldownRef.current) clearInterval(cooldownRef.current);
     cooldownRef.current = setInterval(() => {
-      setCooldownSeconds((prev) => {
+      setCooldownSeconds(prev => {
         if (prev <= 1) {
           if (cooldownRef.current) clearInterval(cooldownRef.current);
           cooldownRef.current = null;
@@ -300,13 +389,17 @@ export default function BatchConvert() {
   };
 
   // Sleep helper for retry delays
-  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   /**
    * Convert a single photo via the backend tRPC proxy.
    * Returns { ok, status, data } so the caller can classify errors.
    */
-  const convertSinglePhoto = async (photo: UploadedPhoto, currentPrompt: string, batchSize: number) => {
+  const convertSinglePhoto = async (
+    photo: UploadedPhoto,
+    currentPrompt: string,
+    batchSize: number
+  ) => {
     const base64 = await fileToBase64(photo.file);
 
     const result = await generateMutation.mutateAsync({
@@ -353,7 +446,9 @@ export default function BatchConvert() {
       return;
     }
     if (cooldownSeconds > 0) {
-      toast.error(`Please wait ${cooldownSeconds}s before retrying (rate limit cooldown)`);
+      toast.error(
+        `Please wait ${cooldownSeconds}s before retrying (rate limit cooldown)`
+      );
       return;
     }
 
@@ -365,7 +460,7 @@ export default function BatchConvert() {
     setBatchError(null);
     abortRef.current = false;
 
-    const results: ConvertedPhoto[] = photos.map((p) => ({
+    const results: ConvertedPhoto[] = photos.map(p => ({
       id: p.id,
       originalPreview: p.preview,
       convertedUrl: "",
@@ -383,10 +478,14 @@ export default function BatchConvert() {
     for (let i = 0; i < photos.length; i++) {
       // Check if batch was aborted
       if (abortRef.current) {
-        setConvertedPhotos((prev) =>
-          prev.map((r) =>
+        setConvertedPhotos(prev =>
+          prev.map(r =>
             r.status === "pending"
-              ? { ...r, status: "error" as const, error: "Batch stopped due to critical error" }
+              ? {
+                  ...r,
+                  status: "error" as const,
+                  error: "Batch stopped due to critical error",
+                }
               : r
           )
         );
@@ -396,8 +495,8 @@ export default function BatchConvert() {
       const photo = photos[i];
 
       // Update status to converting
-      setConvertedPhotos((prev) =>
-        prev.map((r) =>
+      setConvertedPhotos(prev =>
+        prev.map(r =>
           r.id === photo.id ? { ...r, status: "converting" as const } : r
         )
       );
@@ -416,7 +515,10 @@ export default function BatchConvert() {
               {
                 code: result.data?.code,
                 limitType: result.data?.limitType,
-                message: result.data?.message || result.data?.error || `HTTP ${result.status}`,
+                message:
+                  result.data?.message ||
+                  result.data?.error ||
+                  `HTTP ${result.status}`,
                 retryAfter: 30,
                 usage: result.data?.usage,
               },
@@ -427,13 +529,21 @@ export default function BatchConvert() {
             if (apiError.type === "auth_error") {
               setBatchError(apiError);
               abortRef.current = true;
-              setConvertedPhotos((prev) =>
-                prev.map((r) =>
+              setConvertedPhotos(prev =>
+                prev.map(r =>
                   r.id === photo.id
-                    ? { ...r, status: "error" as const, error: apiError.message }
+                    ? {
+                        ...r,
+                        status: "error" as const,
+                        error: apiError.message,
+                      }
                     : r.status === "pending"
-                    ? { ...r, status: "error" as const, error: "Stopped: Invalid API key" }
-                    : r
+                      ? {
+                          ...r,
+                          status: "error" as const,
+                          error: "Stopped: Invalid API key",
+                        }
+                      : r
                 )
               );
               failCount++;
@@ -444,13 +554,21 @@ export default function BatchConvert() {
             if (apiError.type === "quota_exhausted") {
               setBatchError(apiError);
               abortRef.current = true;
-              setConvertedPhotos((prev) =>
-                prev.map((r) =>
+              setConvertedPhotos(prev =>
+                prev.map(r =>
                   r.id === photo.id
-                    ? { ...r, status: "error" as const, error: apiError.message }
+                    ? {
+                        ...r,
+                        status: "error" as const,
+                        error: apiError.message,
+                      }
                     : r.status === "pending"
-                    ? { ...r, status: "error" as const, error: "Stopped: API quota exhausted" }
-                    : r
+                      ? {
+                          ...r,
+                          status: "error" as const,
+                          error: "Stopped: API quota exhausted",
+                        }
+                      : r
                 )
               );
               failCount++;
@@ -460,15 +578,27 @@ export default function BatchConvert() {
 
             if (apiError.type === "usage_limit") {
               setBatchError(apiError);
-              openLimitDialog("Gemini safety cap reached", apiError.message, apiError.usage);
+              openLimitDialog(
+                "Gemini safety cap reached",
+                apiError.message,
+                apiError.usage
+              );
               abortRef.current = true;
-              setConvertedPhotos((prev) =>
-                prev.map((r) =>
+              setConvertedPhotos(prev =>
+                prev.map(r =>
                   r.id === photo.id
-                    ? { ...r, status: "error" as const, error: apiError.message }
+                    ? {
+                        ...r,
+                        status: "error" as const,
+                        error: apiError.message,
+                      }
                     : r.status === "pending"
-                    ? { ...r, status: "error" as const, error: "Stopped: safety cap reached" }
-                    : r
+                      ? {
+                          ...r,
+                          status: "error" as const,
+                          error: "Stopped: safety cap reached",
+                        }
+                      : r
                 )
               );
               failCount++;
@@ -482,7 +612,9 @@ export default function BatchConvert() {
               const waitTime = apiError.retryAfter || 30;
 
               if (retries < maxRetries) {
-                toast.warning(`Rate limited. Waiting ${waitTime}s before retry... (attempt ${retries + 1}/${maxRetries})`);
+                toast.warning(
+                  `Rate limited. Waiting ${waitTime}s before retry... (attempt ${retries + 1}/${maxRetries})`
+                );
                 startCooldown(waitTime);
                 await sleep(waitTime * 1000);
                 retries++;
@@ -492,10 +624,14 @@ export default function BatchConvert() {
                   ...apiError,
                   message: `Rate limit hit for one photo after ${maxRetries} retries — skipping it and continuing.`,
                 });
-                setConvertedPhotos((prev) =>
-                  prev.map((r) =>
+                setConvertedPhotos(prev =>
+                  prev.map(r =>
                     r.id === photo.id
-                      ? { ...r, status: "error" as const, error: "Rate limit — max retries reached" }
+                      ? {
+                          ...r,
+                          status: "error" as const,
+                          error: "Rate limit — max retries reached",
+                        }
                       : r
                   )
                 );
@@ -507,7 +643,9 @@ export default function BatchConvert() {
 
             // Server errors — retry once
             if (apiError.type === "server_error" && retries < maxRetries) {
-              toast.warning(`Server error (${result.status}). Retrying in 5s...`);
+              toast.warning(
+                `Server error (${result.status}). Retrying in 5s...`
+              );
               await sleep(5000);
               retries++;
               continue;
@@ -520,15 +658,13 @@ export default function BatchConvert() {
           // Success — extract image URL from response
           const data = result.data;
           const imageUrl =
-            data?.images?.[0]?.url ||
-            data?.result?.url ||
-            data?.url;
+            data?.images?.[0]?.url || data?.result?.url || data?.url;
           if (!imageUrl) {
-            throw new Error('No image URL found in successful response');
+            throw new Error("No image URL found in successful response");
           }
 
-          setConvertedPhotos((prev) =>
-            prev.map((r) =>
+          setConvertedPhotos(prev =>
+            prev.map(r =>
               r.id === photo.id
                 ? { ...r, status: "done" as const, convertedUrl: imageUrl }
                 : r
@@ -543,7 +679,9 @@ export default function BatchConvert() {
 
           // Network errors — retry
           if (apiError.type === "network_error" && retries < maxRetries) {
-            toast.warning(`Network error. Retrying in 3s... (attempt ${retries + 1}/${maxRetries})`);
+            toast.warning(
+              `Network error. Retrying in 3s... (attempt ${retries + 1}/${maxRetries})`
+            );
             await sleep(3000);
             retries++;
             continue;
@@ -551,8 +689,8 @@ export default function BatchConvert() {
 
           // Final failure for this photo
           console.error("Conversion error:", err);
-          setConvertedPhotos((prev) =>
-            prev.map((r) =>
+          setConvertedPhotos(prev =>
+            prev.map(r =>
               r.id === photo.id
                 ? {
                     ...r,
@@ -606,7 +744,7 @@ export default function BatchConvert() {
       return;
     }
 
-    const failedPhotos = convertedPhotos.filter((p) => p.status === "error");
+    const failedPhotos = convertedPhotos.filter(p => p.status === "error");
     if (failedPhotos.length === 0) return;
     if (failedPhotos.length > MAX_BATCH_SIZE) {
       openLimitDialog(
@@ -615,7 +753,10 @@ export default function BatchConvert() {
       );
       return;
     }
-    if (usageQuery.data && failedPhotos.length > usageQuery.data.userRemaining) {
+    if (
+      usageQuery.data &&
+      failedPhotos.length > usageQuery.data.userRemaining
+    ) {
       openLimitDialog(
         "Daily user cap reached",
         `This browser has ${usageQuery.data.userRemaining} Gemini image conversion${usageQuery.data.userRemaining === 1 ? "" : "s"} left today.`,
@@ -623,7 +764,10 @@ export default function BatchConvert() {
       );
       return;
     }
-    if (usageQuery.data && failedPhotos.length > usageQuery.data.globalRemaining) {
+    if (
+      usageQuery.data &&
+      failedPhotos.length > usageQuery.data.globalRemaining
+    ) {
       openLimitDialog(
         "Daily project cap reached",
         `GradeFlow has ${usageQuery.data.globalRemaining} Gemini image conversion${usageQuery.data.globalRemaining === 1 ? "" : "s"} left today.`,
@@ -637,9 +781,11 @@ export default function BatchConvert() {
     abortRef.current = false;
 
     // Reset failed items to pending
-    setConvertedPhotos((prev) =>
-      prev.map((r) =>
-        r.status === "error" ? { ...r, status: "pending" as const, error: undefined } : r
+    setConvertedPhotos(prev =>
+      prev.map(r =>
+        r.status === "error"
+          ? { ...r, status: "pending" as const, error: undefined }
+          : r
       )
     );
 
@@ -650,40 +796,56 @@ export default function BatchConvert() {
       if (abortRef.current) break;
 
       const failedPhoto = failedPhotos[i];
-      const originalPhoto = photos.find((p) => p.id === failedPhoto.id);
+      const originalPhoto = photos.find(p => p.id === failedPhoto.id);
       if (!originalPhoto) {
         retryFail++;
         continue;
       }
 
-      setConvertedPhotos((prev) =>
-        prev.map((r) =>
+      setConvertedPhotos(prev =>
+        prev.map(r =>
           r.id === failedPhoto.id ? { ...r, status: "converting" as const } : r
         )
       );
 
       try {
-        const result = await convertSinglePhoto(originalPhoto, prompt || failedPhoto.prompt, failedPhotos.length);
+        const result = await convertSinglePhoto(
+          originalPhoto,
+          prompt || failedPhoto.prompt,
+          failedPhotos.length
+        );
 
         if (!result.ok) {
           const apiError = classifyError(
             {
               code: result.data?.code,
               limitType: result.data?.limitType,
-              message: result.data?.message || result.data?.error || `HTTP ${result.status}`,
+              message:
+                result.data?.message ||
+                result.data?.error ||
+                `HTTP ${result.status}`,
               usage: result.data?.usage,
             },
             result.status
           );
 
-          if (apiError.type === "auth_error" || apiError.type === "quota_exhausted" || apiError.type === "rate_limit" || apiError.type === "usage_limit") {
+          if (
+            apiError.type === "auth_error" ||
+            apiError.type === "quota_exhausted" ||
+            apiError.type === "rate_limit" ||
+            apiError.type === "usage_limit"
+          ) {
             setBatchError(apiError);
             abortRef.current = true;
             if (apiError.type === "rate_limit") {
               startCooldown(apiError.retryAfter || 30);
             }
             if (apiError.type === "usage_limit") {
-              openLimitDialog("Gemini safety cap reached", apiError.message, apiError.usage);
+              openLimitDialog(
+                "Gemini safety cap reached",
+                apiError.message,
+                apiError.usage
+              );
             }
           }
 
@@ -692,26 +854,33 @@ export default function BatchConvert() {
 
         const data = result.data;
         const imageUrl =
-          data?.images?.[0]?.url ||
-          data?.result?.url ||
-          data?.url;
+          data?.images?.[0]?.url || data?.result?.url || data?.url;
         if (!imageUrl) {
-          throw new Error('No image URL found in successful response');
+          throw new Error("No image URL found in successful response");
         }
 
-        setConvertedPhotos((prev) =>
-          prev.map((r) =>
+        setConvertedPhotos(prev =>
+          prev.map(r =>
             r.id === failedPhoto.id
-              ? { ...r, status: "done" as const, convertedUrl: imageUrl, error: undefined }
+              ? {
+                  ...r,
+                  status: "done" as const,
+                  convertedUrl: imageUrl,
+                  error: undefined,
+                }
               : r
           )
         );
         retrySuccess++;
       } catch (err: any) {
-        setConvertedPhotos((prev) =>
-          prev.map((r) =>
+        setConvertedPhotos(prev =>
+          prev.map(r =>
             r.id === failedPhoto.id
-              ? { ...r, status: "error" as const, error: err.message || "Retry failed" }
+              ? {
+                  ...r,
+                  status: "error" as const,
+                  error: err.message || "Retry failed",
+                }
               : r
           )
         );
@@ -736,14 +905,15 @@ export default function BatchConvert() {
 
   const dismissError = () => setBatchError(null);
 
-  const doneCount = convertedPhotos.filter((p) => p.status === "done").length;
-  const errorCount = convertedPhotos.filter((p) => p.status === "error").length;
+  const doneCount = convertedPhotos.filter(p => p.status === "done").length;
+  const errorCount = convertedPhotos.filter(p => p.status === "error").length;
 
   const handleDownloadAll = useCallback(async () => {
-    const donePhotos = convertedPhotos.filter((p) => p.status === "done");
+    const donePhotos = convertedPhotos.filter(p => p.status === "done");
     if (donePhotos.length === 0) return;
     setIsDownloadingAll(true);
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     try {
       if (isIOS && navigator.share) {
@@ -753,8 +923,16 @@ export default function BatchConvert() {
             const response = await fetch(photo.convertedUrl);
             const blob = await response.blob();
             const ext = blob.type.split("/")[1] || "png";
-            files.push(new File([blob], `${photo.originalName.replace(/\.[^.]+$/, "")}_converted.${ext}`, { type: blob.type }));
-          } catch { /* skip */ }
+            files.push(
+              new File(
+                [blob],
+                `${photo.originalName.replace(/\.[^.]+$/, "")}_converted.${ext}`,
+                { type: blob.type }
+              )
+            );
+          } catch {
+            /* skip */
+          }
         }
         if (files.length > 0) await navigator.share({ files });
       } else {
@@ -772,10 +950,15 @@ export default function BatchConvert() {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            if (i < donePhotos.length - 1) await new Promise(r => setTimeout(r, 300));
-          } catch { /* skip */ }
+            if (i < donePhotos.length - 1)
+              await new Promise(r => setTimeout(r, 300));
+          } catch {
+            /* skip */
+          }
         }
-        toast.success(`Downloaded ${donePhotos.length} converted photo${donePhotos.length > 1 ? "s" : ""}`);
+        toast.success(
+          `Downloaded ${donePhotos.length} converted photo${donePhotos.length > 1 ? "s" : ""}`
+        );
       }
     } catch {
       toast.error("Download failed");
@@ -787,9 +970,7 @@ export default function BatchConvert() {
   return (
     <div className="container max-w-2xl mx-auto px-4 pb-6">
       <div className="mb-5">
-        <h1 className="text-xl font-bold text-slate-800 mb-0.5">
-          Convert
-        </h1>
+        <h1 className="text-xl font-bold text-slate-800 mb-0.5">Convert</h1>
         <p className="text-slate-600 text-sm">
           Upload photos and transform them with AI.
         </p>
@@ -803,15 +984,24 @@ export default function BatchConvert() {
               Gemini safety caps
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              {MAX_BATCH_SIZE} per batch, {MAX_IMAGES_PER_USER_PER_DAY} per user per day, {MAX_IMAGES_PER_DAY} per project per day
+              {MAX_BATCH_SIZE} per batch, {MAX_IMAGES_PER_USER_PER_DAY} per user
+              per day, {MAX_IMAGES_PER_DAY} per project per day
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs">
             <span className="px-2.5 py-1 rounded-lg bg-white/55 text-slate-600 font-semibold">
-              User {usageQuery.data ? usageQuery.data.userRemaining : MAX_IMAGES_PER_USER_PER_DAY} left
+              User{" "}
+              {usageQuery.data
+                ? usageQuery.data.userRemaining
+                : MAX_IMAGES_PER_USER_PER_DAY}{" "}
+              left
             </span>
             <span className="px-2.5 py-1 rounded-lg bg-white/55 text-slate-600 font-semibold">
-              Project {usageQuery.data ? usageQuery.data.globalRemaining : MAX_IMAGES_PER_DAY} left
+              Project{" "}
+              {usageQuery.data
+                ? usageQuery.data.globalRemaining
+                : MAX_IMAGES_PER_DAY}{" "}
+              left
             </span>
           </div>
         </div>
@@ -826,22 +1016,32 @@ export default function BatchConvert() {
             exit={{ opacity: 0, y: -10, height: 0 }}
             className="mb-4 overflow-hidden"
           >
-            <div className={`rounded-2xl p-4 border ${getErrorColor(batchError.type).bg} ${getErrorColor(batchError.type).border}`}>
+            <div
+              className={`rounded-2xl p-4 border ${getErrorColor(batchError.type).bg} ${getErrorColor(batchError.type).border}`}
+            >
               <div className="flex items-start gap-3">
-                <div className={`mt-0.5 ${getErrorColor(batchError.type).icon}`}>
+                <div
+                  className={`mt-0.5 ${getErrorColor(batchError.type).icon}`}
+                >
                   {getErrorIcon(batchError.type)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className={`text-sm font-bold ${getErrorColor(batchError.type).text} mb-0.5`}>
+                  <h4
+                    className={`text-sm font-bold ${getErrorColor(batchError.type).text} mb-0.5`}
+                  >
                     {batchError.type === "rate_limit" && "Rate Limit Reached"}
                     {batchError.type === "usage_limit" && "Safety Cap Reached"}
-                    {batchError.type === "quota_exhausted" && "API Quota Exhausted"}
-                    {batchError.type === "auth_error" && "Authentication Failed"}
+                    {batchError.type === "quota_exhausted" &&
+                      "API Quota Exhausted"}
+                    {batchError.type === "auth_error" &&
+                      "Authentication Failed"}
                     {batchError.type === "network_error" && "Connection Error"}
                     {batchError.type === "server_error" && "Server Error"}
                     {batchError.type === "unknown" && "Conversion Error"}
                   </h4>
-                  <p className={`text-xs ${getErrorColor(batchError.type).text} opacity-80 leading-relaxed`}>
+                  <p
+                    className={`text-xs ${getErrorColor(batchError.type).text} opacity-80 leading-relaxed`}
+                  >
                     {batchError.message}
                   </p>
 
@@ -860,7 +1060,10 @@ export default function BatchConvert() {
                     {batchError.type === "auth_error" && (
                       <Button
                         size="sm"
-                        onClick={() => { setShowApiDialog(true); dismissError(); }}
+                        onClick={() => {
+                          setShowApiDialog(true);
+                          dismissError();
+                        }}
                         className="bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg h-8 px-3 text-xs font-semibold"
                       >
                         <Key className="w-3 h-3 mr-1.5" />
@@ -868,7 +1071,11 @@ export default function BatchConvert() {
                       </Button>
                     )}
                     {batchError.type === "quota_exhausted" && (
-                      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">
+                      <a
+                        href="https://aistudio.google.com/apikey"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <Button
                           size="sm"
                           className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg h-8 px-3 text-xs font-semibold"
@@ -878,17 +1085,20 @@ export default function BatchConvert() {
                         </Button>
                       </a>
                     )}
-                    {(batchError.type === "rate_limit" || batchError.type === "network_error" || batchError.type === "server_error") && errorCount > 0 && (
-                      <Button
-                        size="sm"
-                        onClick={retryFailed}
-                        disabled={isConverting || cooldownSeconds > 0}
-                        className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg h-8 px-3 text-xs font-semibold disabled:opacity-50"
-                      >
-                        <RotateCcw className="w-3 h-3 mr-1.5" />
-                        Retry Failed ({errorCount})
-                      </Button>
-                    )}
+                    {(batchError.type === "rate_limit" ||
+                      batchError.type === "network_error" ||
+                      batchError.type === "server_error") &&
+                      errorCount > 0 && (
+                        <Button
+                          size="sm"
+                          onClick={retryFailed}
+                          disabled={isConverting || cooldownSeconds > 0}
+                          className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg h-8 px-3 text-xs font-semibold disabled:opacity-50"
+                        >
+                          <RotateCcw className="w-3 h-3 mr-1.5" />
+                          Retry Failed ({errorCount})
+                        </Button>
+                      )}
                     <Button
                       size="sm"
                       variant="outline"
@@ -916,7 +1126,7 @@ export default function BatchConvert() {
         className={`glass rounded-2xl p-5 card-shadow mb-4 transition-all ${
           isDragOver ? "ring-2 ring-blue-400 bg-blue-50/30" : ""
         }`}
-        onDragOver={(e) => {
+        onDragOver={e => {
           e.preventDefault();
           setIsDragOver(true);
         }}
@@ -929,7 +1139,7 @@ export default function BatchConvert() {
           accept="image/*"
           multiple
           className="hidden"
-          onChange={(e) => e.target.files && handleFiles(e.target.files)}
+          onChange={e => e.target.files && handleFiles(e.target.files)}
         />
 
         {photos.length === 0 ? (
@@ -1000,7 +1210,7 @@ export default function BatchConvert() {
 
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
               <AnimatePresence>
-                {photos.map((photo) => (
+                {photos.map(photo => (
                   <motion.div
                     key={photo.id}
                     layout
@@ -1042,14 +1252,16 @@ export default function BatchConvert() {
         <div className="flex gap-3 mb-4">
           <Input
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={e => setPrompt(e.target.value)}
             placeholder="Describe how you want to transform your photos..."
             className="h-12 rounded-xl bg-white/50 border-white/40 focus:border-blue-400 text-base"
             disabled={isConverting}
           />
           <Button
             onClick={convertPhotos}
-            disabled={isConverting || photos.length === 0 || cooldownSeconds > 0}
+            disabled={
+              isConverting || photos.length === 0 || cooldownSeconds > 0
+            }
             className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-xl h-11 px-5 font-semibold shadow-lg shadow-blue-500/25 shrink-0 disabled:opacity-50"
           >
             {isConverting ? (
@@ -1070,7 +1282,7 @@ export default function BatchConvert() {
 
         {/* Style Presets */}
         <div className="flex flex-wrap gap-2 mb-3">
-          {STYLE_PRESETS.map((preset) => (
+          {STYLE_PRESETS.map(preset => (
             <button
               key={preset}
               onClick={() => setPrompt(preset)}
@@ -1095,7 +1307,9 @@ export default function BatchConvert() {
             >
               <History className="w-4 h-4" />
               <span>Prompt History</span>
-              <span className="text-xs font-normal text-slate-400 ml-1">({promptHistory.length})</span>
+              <span className="text-xs font-normal text-slate-400 ml-1">
+                ({promptHistory.length})
+              </span>
               {showPromptHistory ? (
                 <ChevronUp className="w-4 h-4 ml-auto" />
               ) : (
@@ -1115,10 +1329,11 @@ export default function BatchConvert() {
                     {/* Favorites first, then recent */}
                     {[...promptHistory]
                       .sort((a, b) => {
-                        if (a.isFavorite !== b.isFavorite) return a.isFavorite ? -1 : 1;
+                        if (a.isFavorite !== b.isFavorite)
+                          return a.isFavorite ? -1 : 1;
                         return b.usedAt - a.usedAt;
                       })
-                      .map((item) => (
+                      .map(item => (
                         <div
                           key={item.id}
                           className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all group cursor-pointer ${
@@ -1132,12 +1347,16 @@ export default function BatchConvert() {
                         >
                           {/* Favorite toggle */}
                           <button
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               togglePromptFavorite(item.id);
                             }}
                             className="shrink-0 p-0.5 transition-colors"
-                            title={item.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                            title={
+                              item.isFavorite
+                                ? "Remove from favorites"
+                                : "Add to favorites"
+                            }
                           >
                             <Star
                               className={`w-3.5 h-3.5 ${
@@ -1162,7 +1381,7 @@ export default function BatchConvert() {
 
                           {/* Delete button */}
                           <button
-                            onClick={(e) => {
+                            onClick={e => {
                               e.stopPropagation();
                               removePromptFromHistory(item.id);
                             }}
@@ -1247,7 +1466,9 @@ export default function BatchConvert() {
                   <Button
                     onClick={async () => {
                       await transferAllToGallery();
-                      toast.success(`Transferred ${doneCount} photos to gallery`);
+                      toast.success(
+                        `Transferred ${doneCount} photos to gallery`
+                      );
                     }}
                     className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-full h-9 px-4 text-sm font-semibold shadow-lg shadow-emerald-500/25"
                   >
@@ -1283,7 +1504,7 @@ export default function BatchConvert() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             <AnimatePresence>
-              {convertedPhotos.map((photo) => (
+              {convertedPhotos.map(photo => (
                 <motion.div
                   key={photo.id}
                   layout
@@ -1341,7 +1562,10 @@ export default function BatchConvert() {
         </motion.div>
       )}
 
-      <Dialog open={!!limitDialog} onOpenChange={(open) => !open && setLimitDialog(null)}>
+      <Dialog
+        open={!!limitDialog}
+        onOpenChange={open => !open && setLimitDialog(null)}
+      >
         <DialogContent className="glass-strong rounded-2xl border-white/30 max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-slate-800">
@@ -1358,25 +1582,39 @@ export default function BatchConvert() {
           <div className="space-y-4 mt-2">
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-white/55 rounded-xl p-3 border border-white/40">
-                <div className="text-[10px] uppercase font-semibold text-slate-400">Batch</div>
-                <div className="text-lg font-bold text-slate-700">{MAX_BATCH_SIZE}</div>
-              </div>
-              <div className="bg-white/55 rounded-xl p-3 border border-white/40">
-                <div className="text-[10px] uppercase font-semibold text-slate-400">User left</div>
+                <div className="text-[10px] uppercase font-semibold text-slate-400">
+                  Batch
+                </div>
                 <div className="text-lg font-bold text-slate-700">
-                  {limitDialog?.usage?.userRemaining ?? usageQuery.data?.userRemaining ?? MAX_IMAGES_PER_USER_PER_DAY}
+                  {MAX_BATCH_SIZE}
                 </div>
               </div>
               <div className="bg-white/55 rounded-xl p-3 border border-white/40">
-                <div className="text-[10px] uppercase font-semibold text-slate-400">Project left</div>
+                <div className="text-[10px] uppercase font-semibold text-slate-400">
+                  User left
+                </div>
                 <div className="text-lg font-bold text-slate-700">
-                  {limitDialog?.usage?.globalRemaining ?? usageQuery.data?.globalRemaining ?? MAX_IMAGES_PER_DAY}
+                  {limitDialog?.usage?.userRemaining ??
+                    usageQuery.data?.userRemaining ??
+                    MAX_IMAGES_PER_USER_PER_DAY}
+                </div>
+              </div>
+              <div className="bg-white/55 rounded-xl p-3 border border-white/40">
+                <div className="text-[10px] uppercase font-semibold text-slate-400">
+                  Project left
+                </div>
+                <div className="text-lg font-bold text-slate-700">
+                  {limitDialog?.usage?.globalRemaining ??
+                    usageQuery.data?.globalRemaining ??
+                    MAX_IMAGES_PER_DAY}
                 </div>
               </div>
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed">
-              GradeFlow blocks the request before it reaches Gemini when these caps are hit. Daily counters follow Gemini's Pacific-time quota day.
+              GradeFlow blocks the request before it reaches Gemini when these
+              caps are hit. Daily counters follow Gemini's Pacific-time quota
+              day.
             </p>
 
             <Button

@@ -6,11 +6,51 @@ import { IDBFactory } from "fake-indexeddb";
 async function freshIdb() {
   (globalThis as any).indexedDB = new IDBFactory();
   // Re-load the module to reset the cached dbPromise
-  const { _resetDBForTesting, idbGet, idbSet, idbRemove } = await import(
-    "../lib/idb"
-  );
+  const { _resetDBForTesting, idbGet, idbSet, idbRemove } =
+    await import("../lib/idb");
   _resetDBForTesting();
   return { idbGet, idbSet, idbRemove };
+}
+
+async function openRawDb(name: string): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(name, 1);
+    req.onupgradeneeded = event => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains("keyvalue")) {
+        db.createObjectStore("keyvalue");
+      }
+    };
+    req.onsuccess = event => resolve((event.target as IDBOpenDBRequest).result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function writeRawValue(
+  dbName: string,
+  key: string,
+  value: unknown
+): Promise<void> {
+  const db = await openRawDb(dbName);
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction("keyvalue", "readwrite");
+    tx.objectStore("keyvalue").put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
+
+async function readRawValue(dbName: string, key: string): Promise<unknown> {
+  const db = await openRawDb(dbName);
+  const value = await new Promise<unknown>(resolve => {
+    const tx = db.transaction("keyvalue", "readonly");
+    const req = tx.objectStore("keyvalue").get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(undefined);
+  });
+  db.close();
+  return value;
 }
 
 const KEYS = {
@@ -88,13 +128,13 @@ describe("Gallery Persistence (IndexedDB)", () => {
     ];
 
     const persistable = allPhotos.filter(
-      (p) => p.status === "done" || p.status === "error"
+      p => p.status === "done" || p.status === "error"
     );
     await idbSet(KEYS.convertedPhotos, persistable);
 
     const loaded = await idbGet<typeof persistable>(KEYS.convertedPhotos, []);
     expect(loaded).toHaveLength(2);
-    expect(loaded.map((p) => p.id)).toEqual(["1", "2"]);
+    expect(loaded.map(p => p.id)).toEqual(["1", "2"]);
   });
 
   it("persists and loads grid size", async () => {
@@ -111,10 +151,65 @@ describe("Gallery Persistence (IndexedDB)", () => {
     expect(loaded).toBe("my-secret-key");
   });
 
+  it("migrates values from legacy ToneLab IndexedDB storage", async () => {
+    const { idbGet } = await freshIdb();
+    const images = [
+      {
+        id: "tonelab-img",
+        url: "data:image/png;base64,tonelab",
+        name: "tonelab.png",
+        addedAt: Date.now(),
+      },
+    ];
+
+    await writeRawValue("tonelab-db", "tonelab-images", images);
+
+    const loaded = await idbGet<typeof images>(KEYS.images, []);
+    const migrated = await readRawValue("gradeflow-db", KEYS.images);
+
+    expect(loaded).toEqual(images);
+    expect(migrated).toEqual(images);
+  });
+
+  it("migrates values from legacy PixelBoard IndexedDB storage", async () => {
+    const { idbGet } = await freshIdb();
+    const images = [
+      {
+        id: "pixelboard-img",
+        url: "data:image/png;base64,pixelboard",
+        name: "pixelboard.png",
+        addedAt: Date.now(),
+      },
+    ];
+
+    await writeRawValue("pixelboard-db", "pixelboard-images", images);
+
+    const loaded = await idbGet<typeof images>(KEYS.images, []);
+    const migrated = await readRawValue("gradeflow-db", KEYS.images);
+
+    expect(loaded).toEqual(images);
+    expect(migrated).toEqual(images);
+  });
+
   it("removes a key", async () => {
     const { idbGet, idbSet, idbRemove } = await freshIdb();
     await idbSet(KEYS.apiKey, "to-delete");
     await idbRemove(KEYS.apiKey);
+    const loaded = await idbGet(KEYS.apiKey, "");
+    expect(loaded).toBe("");
+  });
+
+  it("removes matching legacy storage when deleting a key", async () => {
+    const { idbGet, idbRemove } = await freshIdb();
+    await writeRawValue("tonelab-db", "tonelab-api-key", "tonelab-key");
+    await writeRawValue(
+      "pixelboard-db",
+      "pixelboard-api-key",
+      "pixelboard-key"
+    );
+
+    await idbRemove(KEYS.apiKey);
+
     const loaded = await idbGet(KEYS.apiKey, "");
     expect(loaded).toBe("");
   });
@@ -140,7 +235,10 @@ describe("Gallery Persistence (IndexedDB)", () => {
     const { idbGet, idbSet } = await freshIdb();
     const st = { totalConverted: 42, totalSuccess: 38 };
     await idbSet(KEYS.stats, st);
-    const loaded = await idbGet(KEYS.stats, { totalConverted: 0, totalSuccess: 0 });
+    const loaded = await idbGet(KEYS.stats, {
+      totalConverted: 0,
+      totalSuccess: 0,
+    });
     expect(loaded).toEqual(st);
   });
 
