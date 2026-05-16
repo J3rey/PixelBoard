@@ -71,42 +71,42 @@ const GRADE_PRESETS = [
   {
     label: "Professionally colour grade",
     prompt:
-      "Professionally colour grade this photo with balanced tones, natural colour enhancement, and pleasing contrast. Keep the image realistic and true to life.",
+      "Create a visibly colour graded version of this photo. Make it look professionally edited in Lightroom: improve white balance, deepen contrast, enrich colours, add clean saturation, slightly lift shadows, protect highlights, and make the final image noticeably more polished. Keep the subject, framing, and realism unchanged. Return the edited image, not the original.",
   },
   {
     label: "Cinematic teal & orange",
     prompt:
-      "Apply a cinematic teal and orange colour grade. Push shadows towards teal and highlights towards warm orange, like a Hollywood blockbuster film.",
+      "Create a visibly edited image with a cinematic teal and orange colour grade. Push shadows clearly towards teal and highlights towards warm orange, deepen contrast, add controlled saturation, and make the grade obvious when compared with the original. Keep the subject and composition unchanged. Return the edited image, not the original.",
   },
   {
     label: "Golden hour warm",
     prompt:
-      "Apply a golden hour colour grade with warm amber and peach tones, gently lifted shadows, and soft glowing highlights.",
+      "Create a visibly edited golden hour colour grade. Add warm amber and peach tones, gently lift shadows, soften highlights, add a subtle glow, and make the photo feel warmer and more polished than the original. Keep the subject and composition unchanged. Return the edited image, not the original.",
   },
   {
     label: "Moody dark",
     prompt:
-      "Apply a moody dark colour grade with deep rich shadows, desaturated midtones, and high contrast. Keep detail in the highlights.",
+      "Create a visibly edited moody dark colour grade. Deepen shadows, reduce midtone saturation, add strong contrast, preserve highlight detail, and give the image a dramatic editorial look. Keep the subject and composition unchanged. Return the edited image, not the original.",
   },
   {
     label: "Faded film",
     prompt:
-      "Apply a faded film colour grade with lifted blacks, muted tones, reduced saturation, and an analogue feel reminiscent of expired film.",
+      "Create a visibly edited faded film colour grade. Lift the blacks, mute the colours, reduce saturation, soften contrast, and add an analogue expired-film feel that is clearly different from the original. Keep the subject and composition unchanged. Return the edited image, not the original.",
   },
   {
     label: "Vibrant pop",
     prompt:
-      "Colour grade this photo to be vibrant and punchy with a significant saturation boost, clean bright highlights, and rich deep colours.",
+      "Create a visibly edited vibrant colour grade. Add a strong but clean saturation boost, brighten highlights, deepen rich colours, increase clarity, and make the final image punchier and more energetic than the original. Keep the subject and composition unchanged. Return the edited image, not the original.",
   },
   {
     label: "Cool editorial",
     prompt:
-      "Apply a cool editorial colour grade with desaturated tones shifted towards blue, crisp clean shadows, and a high-fashion magazine feel.",
+      "Create a visibly edited cool editorial colour grade. Shift tones towards blue, slightly desaturate warm colours, add crisp clean shadows, increase contrast, and give the photo a high-fashion magazine feel. Keep the subject and composition unchanged. Return the edited image, not the original.",
   },
   {
     label: "Soft portrait",
     prompt:
-      "Apply a soft portrait colour grade with creamy flattering skintones, gentle low contrast, and warm lifted shadows suited to portraiture.",
+      "Create a visibly edited soft portrait colour grade. Make skintones creamy and flattering, warm and lift the shadows, soften contrast, smooth harsh colour casts, and make the portrait look professionally retouched while staying realistic. Keep the subject and composition unchanged. Return the edited image, not the original.",
   },
 ];
 
